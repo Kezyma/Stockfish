@@ -38,11 +38,11 @@
 namespace Stockfish {
 
 // Returns a static, purely materialistic evaluation of the position from
-// the point of view of the given color. It can be divided by PawnValue to get
+// the point of view of the given color. It can be divided by PawnValue to gets
 // an approximation of the material advantage on the board in terms of pawns.
 int Eval::simple_eval(const Position& pos, Color c) {
-    return PawnValue * (pos.count<PAWN>(c) - pos.count<PAWN>(~c))
-         + (pos.non_pawn_material(c) - pos.non_pawn_material(~c));
+    return -(PawnValue * (pos.count<PAWN>(c) - pos.count<PAWN>(~c))
+         + (pos.non_pawn_material(c) - pos.non_pawn_material(~c)));
 }
 
 bool Eval::use_smallnet(const Position& pos) {
@@ -87,7 +87,7 @@ Value Eval::evaluate(const Eval::NNUE::Networks&    networks,
     // Guarantee evaluation does not hit the tablebase range
     v = std::clamp(v, VALUE_TB_LOSS_IN_MAX_PLY + 1, VALUE_TB_WIN_IN_MAX_PLY - 1);
 
-    return v;
+    return -v;
 }
 
 // Like evaluate(), but instead of returning a value, it returns
@@ -108,7 +108,7 @@ std::string Eval::trace(Position& pos, const Eval::NNUE::Networks& networks) {
     ss << std::showpoint << std::showpos << std::fixed << std::setprecision(2) << std::setw(15);
 
     auto [psqt, positional] = networks.big.evaluate(pos, &caches->big);
-    Value v                 = psqt + positional;
+    Value v                 = -(psqt + positional);
     v                       = pos.side_to_move() == WHITE ? v : -v;
     ss << "NNUE evaluation        " << 0.01 * UCIEngine::to_cp(v, pos) << " (white side)\n";
 
